@@ -20,6 +20,8 @@ public static class StartUp
     {
         services.AddSingleton<IConfiguration>(_configuration);
 
+        services.AddMediatR(c => c.RegisterServicesFromAssembly(typeof(StartUp).Assembly));
+
         return services;
     }
 }
