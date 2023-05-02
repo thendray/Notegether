@@ -11,7 +11,7 @@ public static class BotClientExtensions
     public static TelegramBotClient ConfigureBot(
         this TelegramBotClient botClient,
         CancellationToken cancellationToken,
-        Func<ITelegramBotClient,Update,CancellationToken,Task> updateHandler,
+        Func<ITelegramBotClient,Update,CancellationToken, Task> updateHandler,
         Func<ITelegramBotClient,Exception,CancellationToken,Task>  pollingErrorHandler
         )
     {

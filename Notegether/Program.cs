@@ -15,11 +15,13 @@ var token = appSettings.Token;
 
 var botClient = new TelegramBotClient(token);
 
+
+var handler = serviceProvider.GetService<BotHandlers>();
+
 botClient.ConfigureBot(
     cts.Token,
-    BotHandlers.HandleUpdateAsync,
-    BotHandlers.HandlePollingErrorAsync);
-
+    handler.HandleUpdateAsync,
+    handler.HandlePollingErrorAsync);
 
 
 
