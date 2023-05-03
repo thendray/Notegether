@@ -20,6 +20,7 @@ public class SayHelloCommandHandler : IRequestHandler<SayHelloCommand, SayHelloR
 
     public async Task<SayHelloResult> Handle(SayHelloCommand request, CancellationToken cancellationToken)
     {
+        
         var result = await Task.Factory.StartNew( 
             () => 
                 new SayHelloResult($"{_service.Hello()} {request.UserName}!\n")
