@@ -12,7 +12,7 @@ public class BotHandlers
 {
     private readonly NotegetherController _controller;
     
-    private Dictionary<ChatId, CommandStatus> _commandStatuses;
+    private readonly Dictionary<ChatId, CommandStatus> _commandStatuses;
 
     public BotHandlers(NotegetherController controller)
     {
