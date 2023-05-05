@@ -2,9 +2,13 @@
 using Microsoft.Extensions.DependencyInjection;
 using Notegether.Api;
 using Notegether.Api.BotClient;
+using Notegether.Api.Controllers;
+using Notegether.Bll.Models;
 using Notegether.Bll.Services;
+using Notegether.Bll.Services.Interfaces;
 using Notegether.Dal;
 using Notegether.Dal.Repositories;
+using Telegram.Bot.Types;
 
 namespace Notegether;
 
@@ -28,11 +32,14 @@ public static class StartUp
         services.Configure<Settings>(_configuration.GetSection("Settings"));
         
         services.AddScoped<ISayHelloService, SayHelloService>();
+        services.AddScoped<INoteService, NoteService>();
+        services.AddScoped<IUserService, UserService>();
         services.AddScoped<NotegetherController>();
         services.AddScoped<BotHandlers>();
         
         services.AddDbContext<MyDbContext>();
         services.AddScoped<INoteRepository, NoteRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
         
         services.AddMediatR(c => c.RegisterServicesFromAssembly(typeof(StartUp).Assembly));
 

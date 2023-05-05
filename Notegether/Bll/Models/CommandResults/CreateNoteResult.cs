@@ -1,3 +1,5 @@
 ﻿namespace Notegether.Bll.Models;
 
-public record CreateNoteResult();
+public record CreateNoteResult(
+    string Identifier
+    );

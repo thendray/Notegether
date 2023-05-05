@@ -1,4 +1,5 @@
-﻿using Notegether.Api.Requests;
+﻿using Notegether.Api.Controllers;
+using Notegether.Api.Requests;
 using Notegether.Bll.Models;
 using Notegether.Bll.Models.Enums;
 using Telegram.Bot;
@@ -25,6 +26,7 @@ public class BotHandlers
         Update update,
         CancellationToken cancellationToken)
     {
+        // update.Message = null;
         // Only process Message updates: https://core.telegram.org/bots/api#message
         if (update.Message is not { } message)
         {
@@ -36,8 +38,6 @@ public class BotHandlers
         // {
         //     return;
         // }
-        
-        
         switch (message.Type)
         {
             case MessageType.Text:
@@ -71,36 +71,57 @@ public class BotHandlers
         ITelegramBotClient botClient,
         CancellationToken cancellationToken)
     {
-        var messageText = message.Text;
+        var messageParts = message.Text.Split(" ");
+        var messageText = messageParts[0];
         var chatId = message.Chat.Id;
 
         switch (messageText)
         {
+            case "/start":
+                _commandStatuses[chatId] = CommandStatus.Start;
+                break;
             case "/hello":
                 _commandStatuses[chatId] = CommandStatus.Hello;
                 break;
             case "/create_note":
                 _commandStatuses[chatId] = CommandStatus.CreateNote;
                 break;
+            case "/delete_note":
+                _commandStatuses[chatId] = CommandStatus.DeleteNote;
+                break;
         }
 
         switch (_commandStatuses[chatId])
         {
+            case CommandStatus.Start:
+                await _controller.Start(new BasicRequest(botClient, message, cancellationToken));
+                _commandStatuses[chatId] = CommandStatus.None;
+                break;
+            
             case CommandStatus.Hello:
-                await _controller.SayHello(new HelloRequest(botClient, message, cancellationToken));
+                await _controller.SayHello(new BasicRequest(botClient, message, cancellationToken));
                 _commandStatuses[chatId] = CommandStatus.None;
                 break;
             
             
             case CommandStatus.CreateNote:
-                var response = await _controller.CreateNote(
+                var createResponse = await _controller.CreateNote(
                     new CreateNoteRequest(botClient, message, cancellationToken));
 
-                if (response.IsReady)
+                if (createResponse.IsReady)
                 {
                     _commandStatuses[chatId] = CommandStatus.None;
                 }
                 
+                break;
+            
+            case CommandStatus.DeleteNote:
+                var deleteResponse = await _controller.DeleteNote(new BasicRequest(botClient, message, cancellationToken));
+
+                if (deleteResponse.IsReady)
+                {
+                    _commandStatuses[chatId] = CommandStatus.None;
+                }
                 break;
 
         }

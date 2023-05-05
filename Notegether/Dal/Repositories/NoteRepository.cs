@@ -1,5 +1,8 @@
-﻿using Notegether.Dal.Entities;
-using Telegram.Bot.Types;
+﻿using Microsoft.EntityFrameworkCore;
+using Notegether.Bll.Models;
+using Notegether.Dal.Entities;
+using Notegether.Dal.Queries;
+using Notegether.Dal.Queries.QueryResults;
 
 namespace Notegether.Dal.Repositories;
 
@@ -13,17 +16,32 @@ public class NoteRepository : INoteRepository
         _dbContext = dbContext;
     }
 
-    public void AddUser(string name)
+    public async Task AddNote(AddNoteQuery query)
     {
-        _dbContext.Users.Add(new UserEntity()
+        await _dbContext.Notes.AddAsync(new NoteEntity
         {
-            Id = 12234,
-            Name = name,
-            Description = "-",
-            Text = "---"
+           ShortIdentifier = query.Identifier,
+           Title = query.Name,
+           Description = query.Description,
+           Text = query.Text,
+           CreatorChatId = query.CreatorChatId,
         });
 
-        _dbContext.SaveChanges();
+        await _dbContext.SaveChangesAsync();
     }
-    
+    public async Task<DeleteQueryResult> Delete(string identifier)
+    {
+        var noteForDell = await _dbContext.Notes.FirstOrDefaultAsync(x => x.ShortIdentifier == identifier);
+        if (noteForDell != null)
+        {
+            _dbContext.Notes.Remove(noteForDell);
+
+            await _dbContext.SaveChangesAsync();
+
+            return new DeleteQueryResult(true, noteForDell.Title);
+        }
+
+        return new DeleteQueryResult(false, "");
+    }
+
 }

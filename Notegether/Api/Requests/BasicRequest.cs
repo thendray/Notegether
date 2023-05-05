@@ -3,7 +3,7 @@ using Telegram.Bot.Types;
 
 namespace Notegether.Api.Requests;
 
-public record HelloRequest(
+public record BasicRequest(
     ITelegramBotClient BotClient,
     Message Message,
     CancellationToken CancellationToken

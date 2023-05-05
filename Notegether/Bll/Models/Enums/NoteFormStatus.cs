@@ -2,6 +2,7 @@
 
 public enum NoteFormStatus
 {
+    None,
     Init,
     Name,
     Description,

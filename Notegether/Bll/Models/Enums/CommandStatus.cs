@@ -3,6 +3,9 @@
 public enum CommandStatus
 {
     None,
+    Start,
     Hello,
-    CreateNote
+    CreateNote,
+    DeleteNote,
+    RefactorNote
 }

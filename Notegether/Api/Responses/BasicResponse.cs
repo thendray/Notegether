@@ -1,5 +1,5 @@
 ﻿namespace Notegether.Api.Responses;
 
-public record CreateNoteResponse(
+public record BasicResponse(
     bool IsReady
     );

@@ -1,0 +1,31 @@
+﻿using Notegether.Dal.Entities;
+using Notegether.Dal.Queries;
+using Telegram.Bot.Types;
+
+namespace Notegether.Dal.Repositories;
+
+public class UserRepository : IUserRepository
+{
+
+    private readonly MyDbContext _dbContext;
+
+    public UserRepository(MyDbContext context)
+    {
+        _dbContext = context;
+    }
+    public async Task AddUser(AddUserQuery query)
+    {
+        await using (_dbContext)
+        {
+            await _dbContext.Users.AddAsync(new UserEntity
+            {
+                ChatId = query.ChatId,
+                UserId = query.UserId,
+                UserName = query.UserName
+            });
+
+            await _dbContext.SaveChangesAsync();
+        }
+        
+    }
+}

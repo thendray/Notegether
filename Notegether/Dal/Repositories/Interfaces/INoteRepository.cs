@@ -1,6 +1,10 @@
-﻿namespace Notegether.Dal;
+﻿using Notegether.Dal.Queries;
+using Notegether.Dal.Queries.QueryResults;
+
+namespace Notegether.Dal;
 
 public interface INoteRepository
 {
-    public void AddUser(string name);
+    public Task AddNote(AddNoteQuery query);
+    public Task<DeleteQueryResult> Delete(string identifier);
 }
