@@ -10,4 +10,7 @@ public interface INoteRepository
     public Task<DeleteQueryResult> Delete(string identifier);
     public Task<NoteEntity> Get(string identifier);
     public Task Update(string identifier, NoteEntity newEntity);
+    public IEnumerable<NoteEntity> GetAllByCreatorId(long id);
+
+    public NoteEntity GetLast();
 }

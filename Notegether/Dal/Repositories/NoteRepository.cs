@@ -18,7 +18,7 @@ public class NoteRepository : INoteRepository
 
     public async Task AddNote(AddNoteQuery query)
     {
-        await _dbContext.Notes.AddAsync(new NoteEntity
+        _dbContext.Notes.Add(new NoteEntity
         {
            ShortIdentifier = query.Identifier,
            Title = query.Name,
@@ -28,6 +28,7 @@ public class NoteRepository : INoteRepository
         });
 
         await _dbContext.SaveChangesAsync();
+        
     }
     public async Task<DeleteQueryResult> Delete(string identifier)
     {
@@ -59,6 +60,23 @@ public class NoteRepository : INoteRepository
             _dbContext.Entry(oldEntity).CurrentValues.SetValues(newEntity);
             await _dbContext.SaveChangesAsync();
         }
+    }
+    public IEnumerable<NoteEntity> GetAllByCreatorId(long id)
+    {
+        foreach (var entity in _dbContext.Notes)
+        {
+            if (entity.CreatorChatId == id)
+            {
+                yield return entity;
+            }
+        }
+    }
+    public NoteEntity GetLast()
+    {
+        NoteEntity note = 
+            _dbContext.Notes.OrderByDescending(p => p.Id).First();
+        
+        return note;
     }
 
 }

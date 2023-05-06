@@ -5,7 +5,8 @@ using Notegether.Bll.Services.Interfaces;
 namespace Notegether.Bll.Commands;
 
 public record DeleteNoteCommand(
-    string Identifier
+    string Identifier,
+    long CreatorId
     ) : IRequest<DeleteNoteResult>;
 
 
@@ -22,13 +23,13 @@ public class DeleteNoteCommandHandle :
 
     public async Task<DeleteNoteResult> Handle(DeleteNoteCommand request, CancellationToken cancellationToken)
     {
-        string result = await _noteService.DeleteNote(request.Identifier);
+        string result = await _noteService.DeleteNote(request.Identifier, request.CreatorId);
 
         if (result == "")
         {
             return new DeleteNoteResult("<i>Такой заметки у вас нет!</i>");
         }
 
-        return new DeleteNoteResult($"<b>Готово, заметка {result} удалена!</b>");
+        return new DeleteNoteResult($"Готово, заметка <b>{result}</b> удалена!");
     }
 }

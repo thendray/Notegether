@@ -19,10 +19,9 @@ public class NoteService : INoteService
 
     public async Task<string> CreateNoteWithIdentifier(NoteModel note, long chatId)
     {
-
-        string identifier = GenerateIdentifier(note.Name);
-        
-       await _noteRepository.AddNote(new AddNoteQuery(
+        string identifier = GenerateIdentifier();
+            
+        await _noteRepository.AddNote(new AddNoteQuery(
             note.Name,
             note.Description,
             note.Text,
@@ -32,8 +31,15 @@ public class NoteService : INoteService
 
         return identifier;
     }
-    public async Task<string> DeleteNote(string identifier)
+    public async Task<string> DeleteNote(string identifier, long id)
     {
+        var note = await _noteRepository.Get(identifier);
+
+        if (note.CreatorChatId != id)
+        {
+            return "";
+        }
+        
         var result = await _noteRepository.Delete(identifier);
 
         if (result.IsFind)
@@ -74,26 +80,23 @@ public class NoteService : INoteService
 
         return null;
     }
-
-
-
-    private string GenerateIdentifier(string name)
+    public IEnumerable<NoteEntity> GetMyNotes(long id)
     {
-        name = name.Replace(" ", "");
+        var notes = _noteRepository.GetAllByCreatorId(id);
 
-        if (name.Length <= 1)
-        {
-            name += "*";
-            return "_" + name + name.Reverse();
-        }
-        
-        if (name.Length <= 5)
-        {
-            return "_" + name;
-        }
-        else
-        {
-            return string.Concat("_", name.AsSpan(0, 5));
-        }
+        return notes;
+    }
+    public async Task<NoteEntity> GetOneNotes(string identifier)
+    {
+        return await _noteRepository.Get(identifier);
+    }
+
+
+    private string GenerateIdentifier()
+    {
+        var id = _noteRepository.GetLast().Id + 1;
+        string identifier = "_" + id;
+
+        return identifier;
     }
 }

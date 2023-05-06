@@ -2,7 +2,6 @@
 using Notegether.Api.Requests;
 using Notegether.Bll.Models;
 using Notegether.Bll.Models.Enums;
-using SQLitePCL;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
@@ -120,9 +119,19 @@ public class BotHandlers
             case "/edit_note":
                 _commandStatuses[chatId] = CommandStatus.EditNote;
                 break;
-            case "get_my_notes":
+            case "/get_my_notes":
                 _commandStatuses[chatId] = CommandStatus.GetMyNotes;
                 break;
+            case "/get_note":
+                _commandStatuses[chatId] = CommandStatus.GetNote;
+                break;
+        }
+
+        Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
+        
+        if (_commandStatuses[chatId] == CommandStatus.None)
+        {
+            return;
         }
 
         switch (_commandStatuses[chatId])
@@ -171,10 +180,19 @@ public class BotHandlers
                 await _controller.GetMyNotes(new BasicRequest(botClient, message, cancellationToken));
                 _commandStatuses[chatId] = CommandStatus.None;
                 break;
+            
+            case CommandStatus.GetNote:
+                var getNoteResponse =
+                    await _controller.GetMyNote(new BasicRequest(botClient, message, cancellationToken));
+
+                if (getNoteResponse.IsReady)
+                {
+                    _commandStatuses[chatId] = CommandStatus.None;
+                }
+                break;
 
         }
-
-        Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
+        
         
         
         // Echo received message text

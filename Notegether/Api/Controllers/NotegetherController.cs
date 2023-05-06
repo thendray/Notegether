@@ -16,15 +16,13 @@ public class NotegetherController
     private readonly IMediator _mediator;
 
     private readonly Dictionary<ChatId, ProcessStatus> _commandProcessStatuses;
-    private readonly Dictionary<ChatId, NoteModel> _noteModels;
-    private readonly Dictionary<ChatId, Tuple<string, string>> _editModels;
+    private readonly Dictionary<ChatId, SaveModel> _savedData;
     private readonly Dictionary<ChatId, List<int>> _chatMessages;
     public NotegetherController(IMediator mediator)
     {
         _mediator = mediator;
-        _noteModels = new Dictionary<ChatId, NoteModel>();
         _chatMessages = new Dictionary<ChatId, List<int>>();
-        _editModels = new Dictionary<ChatId, Tuple<string, string>>();
+        _savedData = new Dictionary<ChatId, SaveModel>();
 
         _commandProcessStatuses = new Dictionary<ChatId, ProcessStatus>();
     }
@@ -54,16 +52,15 @@ public class NotegetherController
 
     public async Task<BasicResponse> CreateNote(CreateNoteRequest request)
     {
-
-        var command = CommandStatus.CreateNote;
         var chatId = request.Message.Chat.Id;
         var messageText = request.Message.Text;
 
         if (!_commandProcessStatuses.ContainsKey(chatId) ||
-            _commandProcessStatuses[chatId]  == ProcessStatus.None)
+            _commandProcessStatuses[chatId]  == ProcessStatus.None ||
+            request.Message.Text == "/create_note")
         {
             _commandProcessStatuses[chatId] = ProcessStatus.Init;
-            _noteModels[chatId] = new NoteModel();
+            _savedData[chatId] = new SaveModel();
         }
 
         switch (_commandProcessStatuses[chatId])
@@ -86,10 +83,10 @@ public class NotegetherController
                 break;
             
             case ProcessStatus.FirstStep:
-                _noteModels[chatId].Name = messageText;
+                _savedData[chatId].Value1 = messageText;
                 var nameMessage = await request.BotClient.SendTextMessageAsync(
                     chatId: request.Message.Chat.Id,
-                    text: $"Добавлено название: {_noteModels[chatId].Name}\n<b>Надо добавить короткое описание заметки:</b>",
+                    text: $"Добавлено название: {_savedData[chatId].Value1}\n<b>Надо добавить короткое описание заметки:</b>",
                     cancellationToken: request.CancellationToken,
                     parseMode: ParseMode.Html);
                 _commandProcessStatuses[chatId] = ProcessStatus.SecondStep;
@@ -99,10 +96,10 @@ public class NotegetherController
                 break;
 
             case ProcessStatus.SecondStep:
-                _noteModels[chatId].Description = messageText;
+                _savedData[chatId].Value2 = messageText;
                 var descriptionMessage = await request.BotClient.SendTextMessageAsync(
                     chatId: request.Message.Chat.Id,
-                    text: $"Добавлено описание:{_noteModels[chatId].Description}\n<b>Следующее сообщение - ваша заметка</b>",
+                    text: $"Добавлено описание:{_savedData[chatId].Value2}\n<b>Следующее сообщение - ваша заметка</b>",
                     cancellationToken: request.CancellationToken,
                     parseMode: ParseMode.Html);
                 _commandProcessStatuses[chatId] = ProcessStatus.ThirdStep;
@@ -112,7 +109,7 @@ public class NotegetherController
                 break;
             
             case ProcessStatus.ThirdStep:
-                _noteModels[chatId].Text = messageText;
+                _savedData[chatId].Value3 = messageText;
                 var readyMessage = await request.BotClient.SendTextMessageAsync(
                     chatId: request.Message.Chat.Id,
                     text: $"<b>Текст заметки получен!</b>",
@@ -129,9 +126,9 @@ public class NotegetherController
 
         if (_commandProcessStatuses[chatId] == ProcessStatus.Ready)
         {
-            var name = _noteModels[chatId].Name;
-            var description = _noteModels[chatId].Description;
-            var text = _noteModels[chatId].Text;
+            var name = _savedData[chatId].Value1;
+            var description = _savedData[chatId].Value2;
+            var text = _savedData[chatId].Value3;
             
 
             Message loadingMessage = await request.BotClient.SendTextMessageAsync(
@@ -169,7 +166,8 @@ public class NotegetherController
         var command = CommandStatus.DeleteNote;
 
         if (!_commandProcessStatuses.ContainsKey(chatId) ||
-            _commandProcessStatuses[chatId] == ProcessStatus.None)
+            _commandProcessStatuses[chatId] == ProcessStatus.None ||
+            request.Message.Text == "/delete_note")
         {
             _commandProcessStatuses[chatId] = ProcessStatus.Init;
         }
@@ -201,7 +199,7 @@ public class NotegetherController
                     cancellationToken: request.CancellationToken,
                     parseMode: ParseMode.Html);
                 
-                var result = await _mediator.Send(new DeleteNoteCommand(request.Message.Text));
+                var result = await _mediator.Send(new DeleteNoteCommand(request.Message.Text, request.Message.From.Id));
                 
                 await request.BotClient.EditMessageTextAsync(chatId,
                     getMessage.MessageId,
@@ -234,7 +232,8 @@ public class NotegetherController
         var chatId = request.Message.Chat.Id;
 
         if (!_commandProcessStatuses.ContainsKey(chatId) ||
-            _commandProcessStatuses[chatId] == ProcessStatus.None)
+            _commandProcessStatuses[chatId] == ProcessStatus.None ||
+            request.Message.Text == "/edit_note")
         {
             _commandProcessStatuses[chatId] = ProcessStatus.Init;
         }
@@ -268,12 +267,15 @@ public class NotegetherController
 
                 _commandProcessStatuses[chatId] = ProcessStatus.SecondStep;
                 _chatMessages[chatId].Add(getMessage.MessageId);
-                _editModels[chatId] = new Tuple<string, string>(request.Message.Text, "");
+                _savedData[chatId] = new SaveModel
+                {
+                    Value1 = request.Message.Text
+                };
                 break;
             
             
             case ProcessStatus.SecondStep:
-                _editModels[chatId] = new Tuple<string, string>(_editModels[chatId].Item1, queryAnswer);
+                _savedData[chatId].Value2 = queryAnswer;
 
                 var queryMessage = await request.BotClient.SendTextMessageAsync(
                     chatId: request.Message.Chat.Id,
@@ -289,8 +291,8 @@ public class NotegetherController
                 _chatMessages[chatId].Add(request.Message.MessageId);
                 
                 var command = new EditNoteCommand(
-                    _editModels[chatId].Item1,
-                    _editModels[chatId].Item2,
+                    _savedData[chatId].Value1,
+                    _savedData[chatId].Value2,
                     request.Message.Text);
 
                 var result = await _mediator.Send(command, request.CancellationToken);
@@ -322,11 +324,74 @@ public class NotegetherController
     {
         var chatId = request.Message.Chat.Id;
 
-        // var command = new GetNotesCommand();
+        var command = new GetNoteCommand(GettingType.GetMyNotes, request.Message.From.Id, null);
 
-        // var result = await _mediator.Send(command, request.CancellationToken);
+        var result = await _mediator.Send(command, request.CancellationToken);
         
-        
+        await request.BotClient.SendTextMessageAsync
+            (chatId, result, parseMode: ParseMode.Html);
+    }
+    public async Task<BasicResponse> GetMyNote(BasicRequest request)
+    {
+        var chatId = request.Message.Chat.Id;
 
+        if (!_commandProcessStatuses.ContainsKey(chatId) ||
+            _commandProcessStatuses[chatId] == ProcessStatus.None || 
+            request.Message.Text == "/get_my_note")
+        {
+            _commandProcessStatuses[chatId] = ProcessStatus.Init;
+        }
+
+        switch (_commandProcessStatuses[chatId])
+        {
+            case ProcessStatus.Init:
+                var startMessage = await request.BotClient.SendTextMessageAsync(
+                    chatId: request.Message.Chat.Id,
+                    text: "<b>Введите идентификатор заметки:</b>",
+                    cancellationToken: request.CancellationToken,
+                    parseMode: ParseMode.Html);
+                
+                if (!_chatMessages.ContainsKey(chatId))
+                {
+                    _chatMessages[chatId] = new List<int>();
+                }
+                _commandProcessStatuses[chatId] = ProcessStatus.FirstStep;
+                _chatMessages[chatId].Add(startMessage.MessageId);
+                break;
+            
+            case ProcessStatus.FirstStep:
+                
+                _chatMessages[chatId].Add(request.Message.MessageId);
+
+                var getMessage = await request.BotClient.SendTextMessageAsync(
+                    chatId: request.Message.Chat.Id,
+                    text: $"<b>Идентефикатор получен</b>\nИщем заметку....",
+                    cancellationToken: request.CancellationToken,
+                    parseMode: ParseMode.Html);
+                
+                var result = await _mediator.Send(new GetNoteCommand(
+                    GettingType.GetOneNote, request.Message.From.Id, request.Message.Text));
+                
+                await request.BotClient.EditMessageTextAsync(chatId,
+                    getMessage.MessageId,
+                    result,
+                    parseMode: ParseMode.Html);
+
+                _commandProcessStatuses[chatId] = ProcessStatus.Ready;
+                break;
+        }
+
+        if (_commandProcessStatuses[chatId] == ProcessStatus.Ready)
+        {
+            foreach (var message in _chatMessages[chatId])
+            {
+                await request.BotClient.DeleteMessageAsync(chatId, message);
+            }
+            _chatMessages[chatId].Clear();
+            _commandProcessStatuses[chatId] = ProcessStatus.None;
+            return new BasicResponse(true);
+        }
+
+        return new BasicResponse(false);
     }
 }

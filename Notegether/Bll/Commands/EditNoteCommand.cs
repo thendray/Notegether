@@ -34,13 +34,13 @@ public class EditNoteCommandHandler :
 
         if (result == null)
         {
-            answer = $"<b>Заметки с индентификатором {request.Identifier} нет!</i>";
+            answer = $"<b>Заметки с индентификатором {request.Identifier} нет!</b>";
         }
         else
         {
             answer = $"Заметка успешно изменена!\n<b>Название:</b> {result.Name}\n" +
                      $"<b>Идентификатор:</b> {request.Identifier}\n" +
-                     $"<b>Описание:</b< {result.Description}\n" +
+                     $"<b>Описание:</b> {result.Description}\n" +
                      $"<b>Текст:</b> {result.Text}";
         }
         return new EditNoteResult(answer);
