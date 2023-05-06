@@ -10,4 +10,6 @@ public interface INoteService
 
     public Task<string> DeleteNote(string identifier);
 
+    public Task<NoteModel> EditNoteTitle(string identifier, string newData, string editPart);
+
 }

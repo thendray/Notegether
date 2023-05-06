@@ -7,5 +7,6 @@ public enum CommandStatus
     Hello,
     CreateNote,
     DeleteNote,
-    RefactorNote
+    EditNote,
+    GetMyNotes
 }

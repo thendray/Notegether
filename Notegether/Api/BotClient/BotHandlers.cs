@@ -2,6 +2,7 @@
 using Notegether.Api.Requests;
 using Notegether.Bll.Models;
 using Notegether.Bll.Models.Enums;
+using SQLitePCL;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
@@ -28,24 +29,51 @@ public class BotHandlers
     {
         // update.Message = null;
         // Only process Message updates: https://core.telegram.org/bots/api#message
+        switch (update.Type)
+        {
+            case UpdateType.Message:
+                break;
+            
+            case UpdateType.CallbackQuery:
+                CallbackQueryHandle(botClient, update, cancellationToken);
+                break;
+        }
+
+        // Only process messages
         if (update.Message is not { } message)
         {
             return;
         }
-
-        // Only process text messages
-        // if (message.Text is not { } messageText)
-        // {
-        //     return;
-        // }
+        
         switch (message.Type)
         {
             case MessageType.Text:
                 await TextMessageHandle(message, botClient, cancellationToken);
                 break;
+            
         }
         
         
+        
+    }
+    
+    
+    private async void CallbackQueryHandle(ITelegramBotClient botClient, Update update, CancellationToken token)
+    {
+        
+        var queryMessage = update.CallbackQuery?.Message;
+
+        if (queryMessage == null)
+            return;
+        
+        var chatId = queryMessage.Chat.Id;
+
+        switch (_commandStatuses[chatId])
+        {
+            case CommandStatus.EditNote:
+                await _controller.EditNote(new BasicRequest(botClient, queryMessage, token), update.CallbackQuery.Data);
+                break;
+        }
         
     }
 
@@ -89,6 +117,12 @@ public class BotHandlers
             case "/delete_note":
                 _commandStatuses[chatId] = CommandStatus.DeleteNote;
                 break;
+            case "/edit_note":
+                _commandStatuses[chatId] = CommandStatus.EditNote;
+                break;
+            case "get_my_notes":
+                _commandStatuses[chatId] = CommandStatus.GetMyNotes;
+                break;
         }
 
         switch (_commandStatuses[chatId])
@@ -122,6 +156,20 @@ public class BotHandlers
                 {
                     _commandStatuses[chatId] = CommandStatus.None;
                 }
+                break;
+            
+            case CommandStatus.EditNote:
+                var editResponse = await _controller.EditNote(new BasicRequest(botClient, message, cancellationToken));
+
+                if (editResponse.IsReady)
+                {
+                    _commandStatuses[chatId] = CommandStatus.None;
+                }
+                break;
+            
+            case CommandStatus.GetMyNotes:
+                await _controller.GetMyNotes(new BasicRequest(botClient, message, cancellationToken));
+                _commandStatuses[chatId] = CommandStatus.None;
                 break;
 
         }

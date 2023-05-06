@@ -43,5 +43,22 @@ public class NoteRepository : INoteRepository
 
         return new DeleteQueryResult(false, "");
     }
+    public async Task<NoteEntity> Get(string identifier)
+    {
+        var noteForEditing = await 
+            _dbContext.Notes.FirstOrDefaultAsync(x => x.ShortIdentifier == identifier);
+        
+        return noteForEditing;
+    }
+    public async Task Update(string identifier, NoteEntity newEntity)
+    {
+        var oldEntity = await _dbContext.Notes.FirstOrDefaultAsync(x => x.ShortIdentifier == newEntity.ShortIdentifier);
+
+        if (oldEntity != null)
+        {
+            _dbContext.Entry(oldEntity).CurrentValues.SetValues(newEntity);
+            await _dbContext.SaveChangesAsync();
+        }
+    }
 
 }
