@@ -4,6 +4,7 @@ using Notegether.Dal;
 using Notegether.Dal.Queries;
 using System;
 using Notegether.Dal.Entities;
+using Notegether.Dal.Models.Enums;
 using Telegram.Bot.Types;
 
 namespace Notegether.Bll.Services;
@@ -11,10 +12,12 @@ namespace Notegether.Bll.Services;
 public class NoteService : INoteService
 {
     private readonly INoteRepository _noteRepository;
+    private readonly IPermissionRepository _permissionRepository;
 
-    public NoteService(INoteRepository noteRepository)
+    public NoteService(INoteRepository noteRepository, IPermissionRepository permissionRepository)
     {
         _noteRepository = noteRepository;
+        _permissionRepository = permissionRepository;
     }
 
     public async Task<string> CreateNoteWithIdentifier(NoteModel note, long chatId)
@@ -49,11 +52,13 @@ public class NoteService : INoteService
 
         return "";
     }
-    public async Task<NoteModel> EditNoteTitle(string identifier, string newData, string editPart)
+    public async Task<NoteModel> EditNote(string identifier, long id, string newData, string editPart)
     {
         NoteEntity result = await _noteRepository.Get(identifier);
+        PermissionEntity permission = await _permissionRepository.Get(identifier, id);
         
-        if (result != null)
+        if (result != null && result.CreatorChatId == id ||
+            (permission != null && permission.PermissionStatus == PermissionStatus.Redactor))
         {
             switch (editPart)
             {

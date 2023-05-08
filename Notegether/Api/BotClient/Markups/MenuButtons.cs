@@ -26,5 +26,24 @@ public static class MenuButtons
         
         return inlineKeyboard;
     }
+    
+    public static InlineKeyboardMarkup PermissionsRolesInlineKeyboardMarkup()
+    {
+        InlineKeyboardMarkup inlineKeyboard = new(new[]
+        {
+            // first row
+            new[]
+            {
+                InlineKeyboardButton.WithCallbackData(
+                    "Читатель",
+                    "reader"),
+                InlineKeyboardButton.WithCallbackData(
+                    "Редактор",
+                    "editor")
+            }
+        });
+        
+        return inlineKeyboard;
+    }
 
 }

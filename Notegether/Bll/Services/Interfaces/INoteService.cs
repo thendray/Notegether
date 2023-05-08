@@ -11,7 +11,7 @@ public interface INoteService
 
     public Task<string> DeleteNote(string identifier, long id);
 
-    public Task<NoteModel> EditNoteTitle(string identifier, string newData, string editPart);
+    public Task<NoteModel> EditNote(string identifier, long id, string newData, string editPart);
 
     public IEnumerable<NoteEntity> GetMyNotes(long id);
     public Task<NoteEntity> GetOneNotes(string identifier);

@@ -7,6 +7,7 @@ using Notegether.Bll.Models;
 using Notegether.Bll.Services;
 using Notegether.Bll.Services.Interfaces;
 using Notegether.Dal;
+using Notegether.Dal.Entities;
 using Notegether.Dal.Repositories;
 using Telegram.Bot.Types;
 
@@ -34,12 +35,14 @@ public static class StartUp
         services.AddScoped<ISayHelloService, SayHelloService>();
         services.AddScoped<INoteService, NoteService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IPermissionService, PermissionService>();
         services.AddScoped<NotegetherController>();
         services.AddScoped<BotHandlers>();
         
         services.AddDbContext<MyDbContext>();
         services.AddScoped<INoteRepository, NoteRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPermissionRepository, PermissionRepository>();
         
         services.AddMediatR(c => c.RegisterServicesFromAssembly(typeof(StartUp).Assembly));
 

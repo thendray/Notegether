@@ -9,5 +9,6 @@ public enum CommandStatus
     DeleteNote,
     EditNote,
     GetMyNotes,
-    GetNote
+    GetNote,
+    AddPermission
 }

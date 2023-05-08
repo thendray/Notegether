@@ -1,4 +1,5 @@
-﻿using Notegether.Dal.Entities;
+﻿using Microsoft.EntityFrameworkCore;
+using Notegether.Dal.Entities;
 using Notegether.Dal.Queries;
 using Telegram.Bot.Types;
 
@@ -27,5 +28,9 @@ public class UserRepository : IUserRepository
             await _dbContext.SaveChangesAsync();
         }
         
+    }
+    public async Task<UserEntity> GetUserByUserName(string userName)
+    {
+       return await _dbContext.Users.FirstOrDefaultAsync(x => x.UserName == userName);
     }
 }

@@ -72,6 +72,11 @@ public class BotHandlers
             case CommandStatus.EditNote:
                 await _controller.EditNote(new BasicRequest(botClient, queryMessage, token), update.CallbackQuery.Data);
                 break;
+            
+            case CommandStatus.AddPermission:
+                await _controller.AddPermission(new BasicRequest(botClient, queryMessage, token),
+                    update.CallbackQuery.Data);
+                break;
         }
         
     }
@@ -124,6 +129,9 @@ public class BotHandlers
                 break;
             case "/get_note":
                 _commandStatuses[chatId] = CommandStatus.GetNote;
+                break;
+            case "/add_permission":
+                _commandStatuses[chatId] = CommandStatus.AddPermission;
                 break;
         }
 
@@ -190,6 +198,17 @@ public class BotHandlers
                     _commandStatuses[chatId] = CommandStatus.None;
                 }
                 break;
+            
+            case CommandStatus.AddPermission:
+                var addPermissionResponse =
+                    await _controller.AddPermission(new BasicRequest(botClient, message, cancellationToken));
+                
+                if (addPermissionResponse.IsReady)
+                {
+                    _commandStatuses[chatId] = CommandStatus.None;
+                }
+                break;
+                
 
         }
         

@@ -5,7 +5,8 @@ namespace Notegether.Dal.Entities;
 public record PermissionEntity
 {
     public long Id { get; set; }
-    public long NoteId { get; set; }
-    public long GetPermissionUserChatId { get; set; }
+    public string NoteIdentifier { get; set; }
+    public long WhoGiveChatId { get; set; }
+    public long WhoGetChatId { get; set; }
     public PermissionStatus PermissionStatus { get; set; }
 }

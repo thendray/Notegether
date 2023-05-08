@@ -9,7 +9,8 @@ namespace Notegether.Bll.Commands;
 public record EditNoteCommand(
     string Identifier,
     string EditPartOfNote,
-    string NewData
+    string NewData,
+    long USerId
     ) : IRequest<EditNoteResult>;
 
 
@@ -27,7 +28,7 @@ public class EditNoteCommandHandler :
     public async Task<EditNoteResult> Handle(EditNoteCommand request, CancellationToken cancellationToken)
     {
         NoteModel result = await 
-            _noteService.EditNoteTitle(request.Identifier, request.NewData, request.EditPartOfNote);
+            _noteService.EditNote(request.Identifier, request.USerId, request.NewData, request.EditPartOfNote);
         
         
         string answer = "";

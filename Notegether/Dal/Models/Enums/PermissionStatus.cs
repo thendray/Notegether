@@ -3,6 +3,6 @@
 public enum PermissionStatus
 {
     None,
-    Watcher,
+    Reader,
     Redactor
 }

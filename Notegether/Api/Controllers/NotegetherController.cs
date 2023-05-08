@@ -293,7 +293,8 @@ public class NotegetherController
                 var command = new EditNoteCommand(
                     _savedData[chatId].Value1,
                     _savedData[chatId].Value2,
-                    request.Message.Text);
+                    request.Message.Text,
+                    request.Message.Chat.Id);
 
                 var result = await _mediator.Send(command, request.CancellationToken);
                 
@@ -378,6 +379,107 @@ public class NotegetherController
                     parseMode: ParseMode.Html);
 
                 _commandProcessStatuses[chatId] = ProcessStatus.Ready;
+                break;
+        }
+
+        if (_commandProcessStatuses[chatId] == ProcessStatus.Ready)
+        {
+            foreach (var message in _chatMessages[chatId])
+            {
+                await request.BotClient.DeleteMessageAsync(chatId, message);
+            }
+            _chatMessages[chatId].Clear();
+            _commandProcessStatuses[chatId] = ProcessStatus.None;
+            return new BasicResponse(true);
+        }
+
+        return new BasicResponse(false);
+    }
+    public async Task<BasicResponse> AddPermission(BasicRequest request, string queryAnswer = "")
+    {
+        var chatId = request.Message.Chat.Id;
+        
+        if (!_commandProcessStatuses.ContainsKey(chatId) ||
+            _commandProcessStatuses[chatId] == ProcessStatus.None ||
+            request.Message.Text == "/add_permission")
+        {
+            _commandProcessStatuses[chatId] = ProcessStatus.Init;
+        }
+
+        switch (_commandProcessStatuses[chatId])
+        {
+            case ProcessStatus.Init:
+                var startingEditingMessage = await request.BotClient.SendTextMessageAsync(
+                    chatId: request.Message.Chat.Id,
+                    text: $"<b>Готов к добавлению разрешения!</b>\nНадо ввести идентификатор заметки, к которой будет предоставлен доступ: ",
+                    cancellationToken: request.CancellationToken,
+                    parseMode: ParseMode.Html);
+                
+                if (!_chatMessages.ContainsKey(chatId))
+                {
+                    _chatMessages[chatId] = new List<int>();
+                }
+                _commandProcessStatuses[chatId] = ProcessStatus.FirstStep;
+                _chatMessages[chatId].Add(startingEditingMessage.MessageId);
+                break;
+            
+            case ProcessStatus.FirstStep:
+                _chatMessages[chatId].Add(request.Message.MessageId);
+
+                var getMessage = await request.BotClient.SendTextMessageAsync(
+                    chatId: request.Message.Chat.Id,
+                    text: $"<b>Идентефикатор получен</b>\nВведите имя пользователя, которому хотите предоставить доступ (без @)",
+                    cancellationToken: request.CancellationToken,
+                    parseMode: ParseMode.Html);
+
+                _commandProcessStatuses[chatId] = ProcessStatus.SecondStep;
+                _chatMessages[chatId].Add(getMessage.MessageId);
+                _savedData[chatId] = new SaveModel
+                {
+                    Value1 = request.Message.Text
+                };
+                break;
+            
+            
+            case ProcessStatus.SecondStep:
+                _savedData[chatId].Value2 = request.Message.Text;
+                _savedData[chatId].Value3 = request.Message.From.Username;
+
+                var queryMessage = await request.BotClient.SendTextMessageAsync(
+                    chatId: request.Message.Chat.Id,
+                    text: $"<b>Отлично!</b>\nВыберите уровень доступа",
+                    replyMarkup: MenuButtons.PermissionsRolesInlineKeyboardMarkup(),
+                    cancellationToken: request.CancellationToken,
+                    parseMode: ParseMode.Html);
+
+                _commandProcessStatuses[chatId] = ProcessStatus.ThirdStep;
+                _chatMessages[chatId].Add(queryMessage.MessageId);
+                _chatMessages[chatId].Add(request.Message.MessageId);
+                break;
+                
+            case ProcessStatus.ThirdStep:
+
+                var command = new AddPermissionCommand(
+                    _savedData[chatId].Value1,
+                    _savedData[chatId].Value2,
+                    _savedData[chatId].Value3,
+                    chatId,
+                    queryAnswer);
+
+                var result = await _mediator.Send(command, request.CancellationToken);
+                
+                await request.BotClient.SendTextMessageAsync
+                    (chatId, result.WhoGiveMessage, parseMode: ParseMode.Html);
+
+                if (result.IsSuccess)
+                {
+                    await request.BotClient.SendTextMessageAsync(result.WhoGetChatId,
+                        result.WhoGetMessage,
+                        parseMode: ParseMode.Html);
+                }
+                
+                _commandProcessStatuses[chatId] = ProcessStatus.Ready;
+                
                 break;
         }
 
