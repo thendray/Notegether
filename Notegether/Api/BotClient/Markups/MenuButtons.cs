@@ -45,5 +45,24 @@ public static class MenuButtons
         
         return inlineKeyboard;
     }
+    
+    public static InlineKeyboardMarkup EditTypeInlineKeyboardMarkup()
+    {
+        InlineKeyboardMarkup inlineKeyboard = new(new[]
+        {
+            // first row
+            new[]
+            {
+                InlineKeyboardButton.WithCallbackData(
+                    "Изменить",
+                    "rewrite"),
+                InlineKeyboardButton.WithCallbackData(
+                    "Дописать",
+                    "add_text")
+            }
+        });
+        
+        return inlineKeyboard;
+    }
 
 }

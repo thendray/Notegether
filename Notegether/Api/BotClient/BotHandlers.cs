@@ -139,6 +139,9 @@ public class BotHandlers
             case "/delete_permission":
                 _commandStatuses[chatId] = CommandStatus.DeletePermission;
                 break;
+            case "/get_permissions":
+                _commandStatuses[chatId] = CommandStatus.GetPermissions;
+                break;
         }
 
         Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
@@ -229,8 +232,12 @@ public class BotHandlers
                     _commandStatuses[chatId] = CommandStatus.None;
                 }
                 break;
-                
-
+            
+            case CommandStatus.GetPermissions:
+                await _controller.GetGivePermissions(new BasicRequest(botClient, message, cancellationToken));
+                _commandStatuses[chatId] = CommandStatus.None;
+                break;
+            
         }
         
         

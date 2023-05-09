@@ -80,5 +80,9 @@ public class PermissionRepository : IPermissionRepository
             }
         }
     }
+    public IEnumerable<PermissionEntity> GetAllGivePermissions(long chatId)
+    {
+        return _dbContext.Permissions.Where(x => x.WhoGiveChatId == chatId);
+    }
 
 }

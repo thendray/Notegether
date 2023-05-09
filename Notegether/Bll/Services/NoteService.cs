@@ -3,6 +3,7 @@ using Notegether.Bll.Services.Interfaces;
 using Notegether.Dal;
 using Notegether.Dal.Queries;
 using System;
+using Notegether.Bll.Models.Enums;
 using Notegether.Dal.Entities;
 using Notegether.Dal.Models.Enums;
 using Telegram.Bot.Types;
@@ -37,16 +38,16 @@ public class NoteService : INoteService
     public async Task<string> DeleteNote(string identifier, long id)
     {
         var note = await _noteRepository.Get(identifier);
+        IEnumerable<PermissionEntity> permissions = _permissionRepository.GetAllByIdentifier(identifier);
+
 
         if (note.CreatorChatId != id)
         {
-            return "";
+            return null;
         }
         
         var result = await _noteRepository.Delete(identifier);
-
-        IEnumerable<PermissionEntity> permissions = _permissionRepository.GetAllByIdentifier(identifier);
-
+        
         foreach (var permission in permissions)
         {
             _permissionRepository.Delete(permission.NoteIdentifier, permission.WhoGetChatId);
@@ -59,7 +60,7 @@ public class NoteService : INoteService
 
         return "";
     }
-    public async Task<NoteModel> EditNote(string identifier, long id, string newData, string editPart)
+    public async Task<NoteModel> EditNote(string identifier, long id, string newData, string editPart, EditType editType)
     {
         NoteEntity result = await _noteRepository.Get(identifier);
         PermissionEntity permission = await _permissionRepository.Get(identifier, id);
@@ -70,14 +71,14 @@ public class NoteService : INoteService
             switch (editPart)
             {
                 case "title":
-                    result.Title = newData;
+                    result.Title = editType == EditType.Rewrite ? newData : result.Title + " " + newData;
                     break;
 
                 case "description":
-                    result.Description = newData;
+                    result.Description = editType == EditType.Rewrite ? newData : result.Description + "\n" + newData;;
                     break;
                 case "text":
-                    result.Text = newData;
+                    result.Text = editType == EditType.Rewrite ? newData : result.Text + "\n" + newData;
                     break;
             }
             
@@ -90,6 +91,10 @@ public class NoteService : INoteService
             };
         }
 
+        if (result != null && permission == null)
+        {
+            return new NoteModel();
+        }
         return null;
     }
     public IEnumerable<NoteEntity> GetMyNotes(long id)
@@ -148,6 +153,20 @@ public class NoteService : INoteService
         }
         
         return notes;
+    }
+    public List<long> GetChatIdsWithPermissions(string identifier, long userId)
+    {
+        var permissions = _permissionRepository.GetAllByIdentifier(identifier).ToList();
+        var ids = permissions.Select(x => x.WhoGetChatId).ToList();
+        
+        var creatorId = permissions[0].WhoGiveChatId;
+        if (creatorId != userId)
+        {
+            ids.Add(creatorId);
+            ids.Remove(userId);
+        }
+
+        return ids;
     }
 
 

@@ -8,4 +8,5 @@ public interface IUserRepository
 {
     public Task AddUser(AddUserQuery query);
     public Task<UserEntity> GetUserByUserName(string userName);
+    public string GetUserName(long userId);
 }

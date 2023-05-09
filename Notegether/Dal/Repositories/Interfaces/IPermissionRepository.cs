@@ -12,4 +12,5 @@ public interface IPermissionRepository
     IEnumerable<PermissionEntity> GetAllGotNotes(long userId);
     public void Delete(string identifier, long userId);
     public IEnumerable<PermissionEntity> GetAllByIdentifier(string identifier);
+    public IEnumerable<PermissionEntity> GetAllGivePermissions(long chatId);
 }

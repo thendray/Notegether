@@ -79,4 +79,17 @@ public class PermissionService : IPermissionService
 
         return new Tuple<PermissionEntity, NoteEntity>(permission, note);
     }
+    public IEnumerable<PermissionEntity> GetPermissionsByCreatorId(long chatId)
+    {
+        return _permissionRepository.GetAllGivePermissions(chatId);
+    }
+    public string GetUserName(long userId)
+    {
+        return _userRepository.GetUserName(userId);
+    }
+    public async Task<string> GetNoteName(string noteIdentifier)
+    {
+        var note = await _noteRepository.Get(noteIdentifier);
+        return note.Title;
+    }
 }

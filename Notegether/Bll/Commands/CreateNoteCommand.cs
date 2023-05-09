@@ -36,8 +36,13 @@ public class CreateNoteCommandHandler :
             Text = request.Text
         };
 
-        var result = await _service.CreateNoteWithIdentifier(noteModel, request.ChatId);
+        var identifier = await _service.CreateNoteWithIdentifier(noteModel, request.ChatId);
+        
+        string textMessage = $"<b>Заметка создана :)</b>\n" +
+                             $"<i>Название:</i> {request.Name}\n" +
+                             $"<i>Описание:</i> {request.Description}\n" +
+                             $"<i>Краткий идентификатор:</i> {identifier}";
 
-        return new CreateNoteResult(result);
+        return new CreateNoteResult(textMessage);
     }
 }

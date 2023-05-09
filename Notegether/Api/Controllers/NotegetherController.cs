@@ -139,12 +139,7 @@ public class NotegetherController
 
             var result = await _mediator.Send(new CreateNoteCommand(chatId, name, description, text));
 
-            string textMessage = $"<b>Заметка создана :)</b>\n" +
-                                 $"Названеи = {name}\n" +
-                                 $"Описание = {description}\n" +
-                                 $"Краткий идентификатор = {result.Identifier}";
-            
-            await request.BotClient.EditMessageTextAsync(chatId, loadingMessage.MessageId, textMessage, parseMode: ParseMode.Html);
+            await request.BotClient.EditMessageTextAsync(chatId, loadingMessage.MessageId, result.Answer, parseMode: ParseMode.Html);
             
             foreach (var message in _chatMessages[chatId])
             {
@@ -273,33 +268,57 @@ public class NotegetherController
                 };
                 break;
             
-            
             case ProcessStatus.SecondStep:
                 _savedData[chatId].Value2 = queryAnswer;
+                _commandProcessStatuses[chatId] = ProcessStatus.ThirdStep;
+                
+                var editTypeMessge = await request.BotClient.SendTextMessageAsync(
+                    chatId: request.Message.Chat.Id,
+                    text: $"Выберите как, следует изменить:",
+                    cancellationToken: request.CancellationToken,
+                    replyMarkup: MenuButtons.EditTypeInlineKeyboardMarkup(),
+                    parseMode: ParseMode.Html);
+               
+                _chatMessages[chatId].Add(editTypeMessge.MessageId);
+                break;
+            
+            case ProcessStatus.ThirdStep:
+                _savedData[chatId].Value3 = queryAnswer;
 
                 var queryMessage = await request.BotClient.SendTextMessageAsync(
                     chatId: request.Message.Chat.Id,
-                    text: $"<b>Отлично!</b>\nВведите обновленные данные:",
+                    text: $"<b>Отлично!</b>\nСделайте необходимые изменения:",
                     cancellationToken: request.CancellationToken,
                     parseMode: ParseMode.Html);
 
-                _commandProcessStatuses[chatId] = ProcessStatus.ThirdStep;
+                _commandProcessStatuses[chatId] = ProcessStatus.FourthStep;
                 _chatMessages[chatId].Add(queryMessage.MessageId);
                 break;
                 
-            case ProcessStatus.ThirdStep:
+            case ProcessStatus.FourthStep:
                 _chatMessages[chatId].Add(request.Message.MessageId);
                 
                 var command = new EditNoteCommand(
                     _savedData[chatId].Value1,
                     _savedData[chatId].Value2,
                     request.Message.Text,
-                    request.Message.Chat.Id);
+                    request.Message.Chat.Id,
+                    request.Message.From.Username,
+                    _savedData[chatId].Value3);
 
                 var result = await _mediator.Send(command, request.CancellationToken);
                 
                 await request.BotClient.SendTextMessageAsync
                     (chatId, result.ReadyAnswer, parseMode: ParseMode.Html);
+
+                if (result.OthersChatId.Count > 0)
+                {
+                    foreach (var id in result.OthersChatId)
+                    {
+                        await request.BotClient.SendTextMessageAsync
+                            (id, result.MessageForOthers, parseMode: ParseMode.Html);
+                    }
+                }
 
                 _commandProcessStatuses[chatId] = ProcessStatus.Ready;
                 
@@ -588,5 +607,16 @@ public class NotegetherController
 
         return new BasicResponse(false);
         
+    }
+    public async Task GetGivePermissions(BasicRequest request)
+    {
+        var chatId = request.Message.Chat.Id;
+
+        var command = new GetPermissionsCommand(chatId);
+
+        var result = await _mediator.Send(command, request.CancellationToken);
+        
+        await request.BotClient.SendTextMessageAsync
+            (chatId, result, parseMode: ParseMode.Html);
     }
 }

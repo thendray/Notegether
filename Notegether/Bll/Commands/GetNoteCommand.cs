@@ -45,11 +45,11 @@ public class GetNoteCommandHandler : IRequestHandler<GetNoteCommand, string>
                     return $"<b>Заметка:</b> \n<i>Название: </i> {note.Title}\n" +
                            $"<i>Идентификатор: {note.ShortIdentifier}</i>\n" +
                            $"<i>Описание: {note.Description}</i>\n" +
-                           $"<i>Текст: {note.Text}</i>";
+                           $"<i>Текст:\n</i> {note.Text}";
                 }
                 else
                 {
-                    return $"<b>Заметки с индентификатором</b> {request.Identifier} <b>нет!</b>";
+                    return $"<b>Заметки с индентификатором</b> {request.Identifier} <b>нет или вам не выдали доступ к ней!</b>";
                 }
             
             case GettingType.GetOtherNotes:

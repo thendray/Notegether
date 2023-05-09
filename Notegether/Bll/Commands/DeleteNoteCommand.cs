@@ -25,6 +25,11 @@ public class DeleteNoteCommandHandle :
     {
         string result = await _noteService.DeleteNote(request.Identifier, request.CreatorId);
 
+        if (result == null)
+        {
+            return new DeleteNoteResult("<i>У вас нет доступа к этой заметки!</i>");
+        }
+
         if (result == "")
         {
             return new DeleteNoteResult("<i>Такой заметки у вас нет!</i>");

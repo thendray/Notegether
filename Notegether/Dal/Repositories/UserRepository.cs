@@ -33,4 +33,8 @@ public class UserRepository : IUserRepository
     {
        return await _dbContext.Users.FirstOrDefaultAsync(x => x.UserName == userName);
     }
+    public string GetUserName(long userId)
+    {
+        return _dbContext.Users.FirstOrDefault(x => x.ChatId == userId).UserName;
+    }
 }
