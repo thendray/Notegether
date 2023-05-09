@@ -58,4 +58,25 @@ public class PermissionService : IPermissionService
         };
         await _permissionRepository.Add(permissionEntity);
     }
+    public async Task<Tuple<PermissionEntity, NoteEntity>> DeletePermission(string identifier, string userName)
+    {
+        var user = await _userRepository.GetUserByUserName(userName);
+        var note = await _noteRepository.Get(identifier);
+
+        if (user == null)
+        {
+            return new Tuple<PermissionEntity, NoteEntity>(null, null);
+        }
+
+        var permission = await _permissionRepository.Get(identifier, user.ChatId);
+
+        if (permission == null)
+        {
+            return new Tuple<PermissionEntity, NoteEntity>(null, note);
+        }
+
+        _permissionRepository.Delete(identifier, user.ChatId);
+
+        return new Tuple<PermissionEntity, NoteEntity>(permission, note);
+    }
 }

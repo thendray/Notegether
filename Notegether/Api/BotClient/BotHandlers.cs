@@ -103,8 +103,8 @@ public class BotHandlers
         ITelegramBotClient botClient,
         CancellationToken cancellationToken)
     {
-        var messageParts = message.Text.Split(" ");
-        var messageText = messageParts[0];
+        // var messageParts = message.Text.Split(" ");
+        var messageText = message.Text;
         var chatId = message.Chat.Id;
 
         switch (messageText)
@@ -130,8 +130,14 @@ public class BotHandlers
             case "/get_note":
                 _commandStatuses[chatId] = CommandStatus.GetNote;
                 break;
+            case "/get_other_notes":
+                _commandStatuses[chatId] = CommandStatus.GetOtherNotes;
+                break;
             case "/add_permission":
                 _commandStatuses[chatId] = CommandStatus.AddPermission;
+                break;
+            case "/delete_permission":
+                _commandStatuses[chatId] = CommandStatus.DeletePermission;
                 break;
         }
 
@@ -199,11 +205,26 @@ public class BotHandlers
                 }
                 break;
             
+            case CommandStatus.GetOtherNotes:
+                await _controller.GetOtherNotes(new BasicRequest(botClient, message, cancellationToken));
+                _commandStatuses[chatId] = CommandStatus.None;
+                break;
+            
             case CommandStatus.AddPermission:
                 var addPermissionResponse =
                     await _controller.AddPermission(new BasicRequest(botClient, message, cancellationToken));
                 
                 if (addPermissionResponse.IsReady)
+                {
+                    _commandStatuses[chatId] = CommandStatus.None;
+                }
+                break;
+            
+            case CommandStatus.DeletePermission:
+                var deletePermissionResponse =
+                    await _controller.DeletePermission(new BasicRequest(botClient, message, cancellationToken));
+                
+                if (deletePermissionResponse.IsReady)
                 {
                     _commandStatuses[chatId] = CommandStatus.None;
                 }

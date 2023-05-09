@@ -43,7 +43,7 @@ public class AddPermissionCommandHandler :
         }
         else if (!isNoteExist)
         {
-            whoGiveMessage = $"<i>У вас нет заметки с идентификатором {request.Identifier}!</i>";
+            whoGiveMessage = $"<i>У вас нет заметки с идентификатором</i> {request.Identifier}!";
         }
         else
         {

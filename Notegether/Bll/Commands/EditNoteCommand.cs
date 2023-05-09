@@ -10,7 +10,7 @@ public record EditNoteCommand(
     string Identifier,
     string EditPartOfNote,
     string NewData,
-    long USerId
+    long UserId
     ) : IRequest<EditNoteResult>;
 
 
@@ -28,14 +28,14 @@ public class EditNoteCommandHandler :
     public async Task<EditNoteResult> Handle(EditNoteCommand request, CancellationToken cancellationToken)
     {
         NoteModel result = await 
-            _noteService.EditNote(request.Identifier, request.USerId, request.NewData, request.EditPartOfNote);
+            _noteService.EditNote(request.Identifier, request.UserId, request.NewData, request.EditPartOfNote);
         
         
         string answer = "";
 
         if (result == null)
         {
-            answer = $"<b>Заметки с индентификатором {request.Identifier} нет!</b>";
+            answer = $"<b>Заметки с индентификатором</b> {request.Identifier} <b>нет!</b>";
         }
         else
         {

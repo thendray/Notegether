@@ -45,6 +45,13 @@ public class NoteService : INoteService
         
         var result = await _noteRepository.Delete(identifier);
 
+        IEnumerable<PermissionEntity> permissions = _permissionRepository.GetAllByIdentifier(identifier);
+
+        foreach (var permission in permissions)
+        {
+            _permissionRepository.Delete(permission.NoteIdentifier, permission.WhoGetChatId);
+        }
+
         if (result.IsFind)
         {
             return result.NoteName;
@@ -91,9 +98,56 @@ public class NoteService : INoteService
 
         return notes;
     }
-    public async Task<NoteEntity> GetOneNotes(string identifier)
+    public async Task<NoteEntity> GetOneNote(string identifier, long userId)
     {
-        return await _noteRepository.Get(identifier);
+       var note = await _noteRepository.Get(identifier);
+       if (note != null && note.CreatorChatId == userId)
+       {
+           return note;
+       }
+
+       var permission = await _permissionRepository.Get(identifier, userId);
+       
+       if (permission != null && (permission.PermissionStatus == PermissionStatus.Reader
+                                  || permission.PermissionStatus == PermissionStatus.Redactor))
+       {
+           return note;
+       }
+
+       return null;
+    }
+
+    public async Task<IEnumerable<NoteEntity>> GetOtherNotesReader(long userId)
+    {
+        var permissions = _permissionRepository.GetAllGotNotes(userId);
+        List<NoteEntity> notes = new List<NoteEntity>();
+
+        foreach (var permission in permissions)
+        {
+            if (permission.PermissionStatus == PermissionStatus.Reader)
+            {
+                notes.Add(await _noteRepository.Get(permission.NoteIdentifier));
+            }
+        }
+        
+        return notes;
+    }
+    
+    
+    public async Task<IEnumerable<NoteEntity>> GetOtherNotesRedactor(long userId)
+    {
+        var permissions = _permissionRepository.GetAllGotNotes(userId);
+        List<NoteEntity> notes = new List<NoteEntity>();
+
+        foreach (var permission in permissions)
+        {
+            if (permission.PermissionStatus == PermissionStatus.Redactor)
+            {
+                notes.Add(await _noteRepository.Get(permission.NoteIdentifier));
+            }
+        }
+        
+        return notes;
     }
 
 

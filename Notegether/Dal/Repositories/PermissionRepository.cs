@@ -24,6 +24,7 @@ public class PermissionRepository : IPermissionRepository
         }
         else
         {
+            permission.PermissionStatus = permissionEntity.PermissionStatus;
             await Update(permission.NoteIdentifier, permission.WhoGetChatId, permission);
         }
         await _dbContext.SaveChangesAsync();
@@ -36,13 +37,48 @@ public class PermissionRepository : IPermissionRepository
         if (oldEntity != null)
         {
             _dbContext.Entry(oldEntity).CurrentValues.SetValues(permissionEntity);
-            await _dbContext.SaveChangesAsync();
+            _dbContext.SaveChanges();
         }
     }
     public async Task<PermissionEntity> Get(string identifier, long id)
     {
         return await _dbContext.Permissions.FirstOrDefaultAsync(x
             => x.NoteIdentifier == identifier && x.WhoGetChatId == id);
+    }
+    
+    public IEnumerable<PermissionEntity> GetAllGotNotes(long userId)
+    {
+        foreach (var permission in _dbContext.Permissions)
+        {
+            if (permission.WhoGetChatId == userId)
+            {
+                yield return permission;
+            }
+        }
+    }
+    public void Delete(string identifier, long userId)
+    {
+        var permissionForDel =  _dbContext.Permissions.FirstOrDefault(x 
+            => x.NoteIdentifier == identifier && x.WhoGetChatId == userId);
+        
+        if (permissionForDel != null)
+        {
+            _dbContext.Permissions.Remove(permissionForDel);
+
+            _dbContext.SaveChanges();
+            
+        }
+        
+    }
+    public IEnumerable<PermissionEntity> GetAllByIdentifier(string identifier)
+    {
+        foreach (var permission in _dbContext.Permissions)
+        {
+            if (permission.NoteIdentifier == identifier)
+            {
+                yield return permission;
+            }
+        }
     }
 
 }

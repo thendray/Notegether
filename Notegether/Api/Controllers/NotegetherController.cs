@@ -496,4 +496,97 @@ public class NotegetherController
 
         return new BasicResponse(false);
     }
+    
+    public async Task GetOtherNotes(BasicRequest request)
+    {
+        var chatId = request.Message.Chat.Id;
+
+        var command = new GetNoteCommand(GettingType.GetOtherNotes, request.Message.From.Id, null);
+
+        var result = await _mediator.Send(command, request.CancellationToken);
+        
+        await request.BotClient.SendTextMessageAsync
+            (chatId, result, parseMode: ParseMode.Html);
+    }
+    public async Task<BasicResponse> DeletePermission(BasicRequest request)
+    {
+        
+          var chatId = request.Message.Chat.Id;
+        
+        if (!_commandProcessStatuses.ContainsKey(chatId) ||
+            _commandProcessStatuses[chatId] == ProcessStatus.None ||
+            request.Message.Text == "/delete_permission")
+        {
+            _commandProcessStatuses[chatId] = ProcessStatus.Init;
+        }
+
+        switch (_commandProcessStatuses[chatId])
+        {
+            case ProcessStatus.Init:
+                var startingEditingMessage = await request.BotClient.SendTextMessageAsync(
+                    chatId: request.Message.Chat.Id,
+                    text: $"<b>Готов к удалению разрешения!</b>\nНадо ввести идентификатор заметки, к которой следует удалить доступ: ",
+                    cancellationToken: request.CancellationToken,
+                    parseMode: ParseMode.Html);
+                
+                if (!_chatMessages.ContainsKey(chatId))
+                {
+                    _chatMessages[chatId] = new List<int>();
+                }
+                _commandProcessStatuses[chatId] = ProcessStatus.FirstStep;
+                _chatMessages[chatId].Add(startingEditingMessage.MessageId);
+                break;
+            
+            case ProcessStatus.FirstStep:
+                _chatMessages[chatId].Add(request.Message.MessageId);
+
+                var getMessage = await request.BotClient.SendTextMessageAsync(
+                    chatId: request.Message.Chat.Id,
+                    text: $"<b>Идентефикатор получен</b>\nВведите имя пользователя, у которого хотите забрать доступ (без @)",
+                    cancellationToken: request.CancellationToken,
+                    parseMode: ParseMode.Html);
+
+                _commandProcessStatuses[chatId] = ProcessStatus.SecondStep;
+                _chatMessages[chatId].Add(getMessage.MessageId);
+                _savedData[chatId] = new SaveModel
+                {
+                    Value1 = request.Message.Text
+                };
+                break;
+            
+                
+            case ProcessStatus.SecondStep:
+                _chatMessages[chatId].Add(request.Message.MessageId);
+
+                _savedData[chatId].Value2 = request.Message.Text;
+
+                var command = new DeletePermissionCommand(
+                    _savedData[chatId].Value1,
+                    _savedData[chatId].Value2,
+                    chatId);
+
+                var result = await _mediator.Send(command, request.CancellationToken);
+                
+                await request.BotClient.SendTextMessageAsync
+                    (chatId, result, parseMode: ParseMode.Html);
+
+                _commandProcessStatuses[chatId] = ProcessStatus.Ready;
+                
+                break;
+        }
+
+        if (_commandProcessStatuses[chatId] == ProcessStatus.Ready)
+        {
+            foreach (var message in _chatMessages[chatId])
+            {
+                await request.BotClient.DeleteMessageAsync(chatId, message);
+            }
+            _chatMessages[chatId].Clear();
+            _commandProcessStatuses[chatId] = ProcessStatus.None;
+            return new BasicResponse(true);
+        }
+
+        return new BasicResponse(false);
+        
+    }
 }
