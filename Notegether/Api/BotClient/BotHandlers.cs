@@ -26,7 +26,7 @@ public class BotHandlers
         Update update,
         CancellationToken cancellationToken)
     {
-        // update.Message = null;
+        update.Message = null;
         // Only process Message updates: https://core.telegram.org/bots/api#message
         switch (update.Type)
         {
