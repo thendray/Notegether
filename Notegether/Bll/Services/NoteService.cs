@@ -40,6 +40,10 @@ public class NoteService : INoteService
         var note = await _noteRepository.Get(identifier);
         IEnumerable<PermissionEntity> permissions = _permissionRepository.GetAllByIdentifier(identifier);
 
+        if (note == null)
+        {
+            return "";
+        }
 
         if (note.CreatorChatId != id)
         {
@@ -91,9 +95,14 @@ public class NoteService : INoteService
             };
         }
 
-        if (result != null && permission == null)
+        if (result != null && (permission == null || permission.PermissionStatus == PermissionStatus.Reader))
         {
-            return new NoteModel();
+            return new NoteModel
+            {
+                Description = "",
+                Name = "",
+                Text = ""
+            };
         }
         return null;
     }
@@ -159,9 +168,9 @@ public class NoteService : INoteService
         var permissions = _permissionRepository.GetAllByIdentifier(identifier).ToList();
         var ids = permissions.Select(x => x.WhoGetChatId).ToList();
         
-        var creatorId = permissions[0].WhoGiveChatId;
-        if (creatorId != userId)
+        if (permissions.Count > 0 && permissions[0].WhoGiveChatId != userId)
         {
+            var creatorId = permissions[0].WhoGiveChatId;
             ids.Add(creatorId);
             ids.Remove(userId);
         }
