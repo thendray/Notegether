@@ -8,6 +8,7 @@ using Notegether.Bll.Models.Enums;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace Notegether.Api.Controllers;
 
@@ -271,6 +272,11 @@ public class NotegetherController
             case ProcessStatus.SecondStep:
                 _savedData[chatId].Value2 = queryAnswer;
                 _commandProcessStatuses[chatId] = ProcessStatus.ThirdStep;
+
+                await request.BotClient.EditMessageReplyMarkupAsync(
+                    chatId,
+                    _chatMessages[chatId][_chatMessages[chatId].Count - 1],
+                    replyMarkup: MenuButtons.ObjectForEditingMockInlineKeyboardMarkup());
                 
                 var editTypeMessge = await request.BotClient.SendTextMessageAsync(
                     chatId: request.Message.Chat.Id,
@@ -285,6 +291,11 @@ public class NotegetherController
             case ProcessStatus.ThirdStep:
                 _savedData[chatId].Value3 = queryAnswer;
 
+                await request.BotClient.EditMessageReplyMarkupAsync(
+                    chatId,
+                    _chatMessages[chatId][_chatMessages[chatId].Count - 1],
+                    replyMarkup: MenuButtons.EditTypeInlineMockKeyboardMarkup());
+                
                 var queryMessage = await request.BotClient.SendTextMessageAsync(
                     chatId: request.Message.Chat.Id,
                     text: $"<b>Отлично!</b>\nСделайте необходимые изменения:",

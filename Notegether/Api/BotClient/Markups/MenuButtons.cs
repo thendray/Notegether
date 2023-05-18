@@ -27,6 +27,29 @@ public static class MenuButtons
         return inlineKeyboard;
     }
     
+    public static InlineKeyboardMarkup ObjectForEditingMockInlineKeyboardMarkup()
+    {
+        InlineKeyboardMarkup inlineKeyboard = new(new[]
+        {
+            // first row
+            new[]
+            {
+                InlineKeyboardButton.WithCallbackData(
+                    "Название",
+                    "1"),
+                InlineKeyboardButton.WithCallbackData(
+                    "Описание",
+                    "2"),
+                InlineKeyboardButton.WithCallbackData(
+                    "Текст",
+                    "3"),
+            },
+        });
+        
+        
+        return inlineKeyboard;
+    }
+    
     public static InlineKeyboardMarkup PermissionsRolesInlineKeyboardMarkup()
     {
         InlineKeyboardMarkup inlineKeyboard = new(new[]
@@ -59,6 +82,25 @@ public static class MenuButtons
                 InlineKeyboardButton.WithCallbackData(
                     "Дописать",
                     "add_text")
+            }
+        });
+        
+        return inlineKeyboard;
+    }
+    
+    public static InlineKeyboardMarkup EditTypeInlineMockKeyboardMarkup()
+    {
+        InlineKeyboardMarkup inlineKeyboard = new(new[]
+        {
+            // first row
+            new[]
+            {
+                InlineKeyboardButton.WithCallbackData(
+                    "Изменить",
+                    "4"),
+                InlineKeyboardButton.WithCallbackData(
+                    "Дописать",
+                    "5")
             }
         });
         

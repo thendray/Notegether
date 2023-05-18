@@ -2,11 +2,11 @@
 
 public enum ProcessStatus
 {
-    None,
-    Init,
-    FirstStep,
-    SecondStep,
-    ThirdStep,
-    FourthStep,
-    Ready
+    None = 0,
+    Init = 1,
+    FirstStep = 2,
+    SecondStep = 3,
+    ThirdStep = 4,
+    FourthStep = 5,
+    Ready = 6
 }
